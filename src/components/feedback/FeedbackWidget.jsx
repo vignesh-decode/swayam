@@ -200,7 +200,7 @@ function FeedbackModal({ onClose, profile, onboardingComplete }) {
       businessType:       profile.businessType?.name || 'Not set',
       businessTypeId:     profile.businessType?.id   || 'Not set',
       isPerishable:       profile.isPerishable === true ? 'Fresh daily' : profile.isPerishable === false ? 'Inventory/Stock' : 'Not set',
-      deliveryType:       profile.deliveryType === 'self' ? 'Self / Pickup' : profile.deliveryType === 'partner' ? 'Delivery partner' : 'Not set',
+      deliveryType:       profile.deliveryType === 'self' ? 'Self / Pickup' : profile.deliveryType === 'partner' ? 'Delivery partner' : profile.deliveryType === 'both' ? 'Self / Pickup + Delivery partner' : 'Not set',
       deliveryPartner:    profile.deliveryPartner?.name || 'None',
       payLaterEnabled:    profile.payLaterEnabled ? 'Yes' : 'No',
       onboardingComplete: onboardingComplete ? 'Yes' : 'No',
@@ -253,7 +253,7 @@ function FeedbackModal({ onClose, profile, onboardingComplete }) {
               </p>
               <FieldPill label="Business type"     value={profile.businessType?.name} />
               <FieldPill label="Production mode"   value={profile.isPerishable === true ? 'Fresh daily' : profile.isPerishable === false ? 'Inventory' : null} />
-              <FieldPill label="Delivery"          value={profile.deliveryType === 'self' ? 'Self/Pickup' : profile.deliveryPartner?.name || null} />
+              <FieldPill label="Delivery"          value={profile.deliveryType === 'both' ? `Self/Pickup + ${profile.deliveryPartner?.name || 'Partner'}` : profile.deliveryType === 'self' ? 'Self/Pickup' : profile.deliveryPartner?.name || null} />
               <FieldPill label="Pay later enabled" value={profile.payLaterEnabled ? 'Yes' : 'No'} />
             </div>
 

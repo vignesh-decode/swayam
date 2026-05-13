@@ -128,8 +128,8 @@ export default function Step3WhatsAppSync({ onNext, onBack }) {
             </div>
 
             <div className="card overflow-hidden">
-              {catalog.slice(0, 4).map((product, i) => (
-                <div key={product.id} className={`flex items-center gap-3 p-3 ${i < 3 ? 'border-b border-gray-50' : ''}`}>
+              {catalog.map((product, i) => (
+                <div key={product.id} className={`flex items-center gap-3 p-3 ${i < catalog.length - 1 ? 'border-b border-gray-50' : ''}`}>
                   <img
                     src={product.image}
                     alt={product.name}
@@ -143,11 +143,6 @@ export default function Step3WhatsAppSync({ onNext, onBack }) {
                   <p className="text-sm font-700 text-brand-700 flex-shrink-0">₹{product.price}</p>
                 </div>
               ))}
-              {catalog.length > 4 && (
-                <div className="px-3 py-2 bg-gray-50">
-                  <p className="text-xs text-gray-400 text-center">+{catalog.length - 4} more products</p>
-                </div>
-              )}
             </div>
 
           </div>

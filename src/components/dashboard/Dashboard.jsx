@@ -27,15 +27,22 @@ function SwayamLogo() {
 }
 
 // ─── Header ───────────────────────────────────────────────────────────────────
-const TAB_TITLES = { orders: 'Orders', analytics: 'Analytics', customers: 'Customers' }
+const TAB_TITLES = { orders: 'Orders', analytics: 'Analytics', customers: 'Customers', history: 'Orders history' }
 
-function DashboardHeader({ profile, orders, todaysDrop, dashboardTab, ordersFilter, onBack }) {
+function DashboardHeader({ profile, orders, todaysDrop, dashboardTab, ordersFilter, onBack, onOpenMenu }) {
   // Compact header with back arrow when not on the home tab
   if (dashboardTab !== 'home') {
     return (
       <div className="sw-header" style={{ paddingTop: 52, paddingBottom: 20, paddingLeft: 20, paddingRight: 20, position: 'sticky', top: 0, zIndex: 40 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <SwayamLogo />
+          <button onClick={onOpenMenu} aria-label="Menu" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.85)', padding: 4 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           <button
@@ -84,10 +91,11 @@ function DashboardHeader({ profile, orders, todaysDrop, dashboardTab, ordersFilt
       {/* Top bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 }}>
         <SwayamLogo />
-        <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.65)', padding: 4 }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        <button onClick={onOpenMenu} aria-label="Menu" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.85)', padding: 4 }}>
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
           </svg>
         </button>
       </div>
@@ -412,6 +420,92 @@ function OrderCard({ order, onAdvance }) {
   )
 }
 
+// ─── Orders history tab ───────────────────────────────────────────────────────
+function OrdersHistoryTab() {
+  const { state, advanceOrder } = useApp()
+  const { orders } = state
+  const [dateFilter, setDateFilter] = useState('')  // YYYY-MM-DD, '' = all
+  const [nameQuery, setNameQuery] = useState('')
+
+  const fulfilled = orders.filter(o => o.status === 'completed')
+
+  const q = nameQuery.trim().toLowerCase()
+  const filtered = fulfilled.filter(o => {
+    if (dateFilter) {
+      const d = new Date(o.placedAt)
+      const local = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      if (local !== dateFilter) return false
+    }
+    if (q && !o.customerName.toLowerCase().includes(q)) return false
+    return true
+  })
+
+  const hasFilters = dateFilter || nameQuery
+
+  return (
+    <div style={{ padding: '16px 16px 130px' }}>
+      {/* Filters */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 16 }}>
+        <div style={{ position: 'relative' }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+            style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          <input
+            type="text"
+            value={nameQuery}
+            onChange={e => setNameQuery(e.target.value)}
+            placeholder="Search customer name"
+            style={{
+              width: '100%', padding: '11px 12px 11px 36px',
+              border: '1px solid #E5E7EB', borderRadius: 12,
+              fontSize: 14, background: '#fff', color: '#1C1C1A',
+              outline: 'none', boxSizing: 'border-box',
+            }}
+          />
+        </div>
+        <input
+          type="date"
+          value={dateFilter}
+          onChange={e => setDateFilter(e.target.value)}
+          style={{
+            width: '100%', padding: '11px 12px',
+            border: '1px solid #E5E7EB', borderRadius: 12,
+            fontSize: 14, background: '#fff', color: dateFilter ? '#1C1C1A' : '#9CA3AF',
+            outline: 'none', boxSizing: 'border-box',
+          }}
+        />
+        {hasFilters && (
+          <button
+            onClick={() => { setDateFilter(''); setNameQuery('') }}
+            style={{
+              alignSelf: 'flex-start', background: 'none',
+              border: '1px solid #E5E7EB', borderRadius: 20,
+              padding: '4px 12px', fontSize: 12, color: '#6B6B67', cursor: 'pointer',
+            }}
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
+
+      <p style={{ fontSize: 12, color: '#6B6B67', marginBottom: 10 }}>
+        {filtered.length} fulfilled order{filtered.length !== 1 ? 's' : ''}
+      </p>
+
+      {filtered.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '40px 20px' }}>
+          <p style={{ fontSize: 14, color: '#9CA3AF' }}>
+            {fulfilled.length === 0 ? 'No fulfilled orders yet' : 'No orders match your filters'}
+          </p>
+        </div>
+      ) : (
+        filtered.map(o => <OrderCard key={o.id} order={o} onAdvance={advanceOrder} />)
+      )}
+    </div>
+  )
+}
+
 // ─── Analytics tab ────────────────────────────────────────────────────────────
 function AnalyticsTab() {
   return (
@@ -518,10 +612,108 @@ function FabNudge() {
   )
 }
 
+// ─── Side menu drawer ─────────────────────────────────────────────────────────
+const MENU_ITEMS = [
+  { id: 'profile',       label: 'Profile' },
+  { id: 'customers',     label: 'Customers' },
+  { id: 'subscriptions', label: 'Subscriptions' },
+  { id: 'orders',        label: 'Orders history' },
+  { id: 'settings',      label: 'Settings' },
+  { id: 'logout',        label: 'Logout' },
+]
+
+function MenuIconSvg({ id }) {
+  const props = { width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' }
+  if (id === 'profile')       return <svg {...props}><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+  if (id === 'customers')     return <svg {...props}><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+  if (id === 'subscriptions') return <svg {...props}><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+  if (id === 'orders')        return <svg {...props}><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+  if (id === 'settings')      return <svg {...props}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51h0a1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+  return <svg {...props}><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+}
+
+function SideMenu({ open, onClose, profile, onSelect }) {
+  return (
+    <>
+      <div
+        onClick={onClose}
+        style={{
+          position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.45)',
+          opacity: open ? 1 : 0, pointerEvents: open ? 'auto' : 'none',
+          transition: 'opacity 0.25s', zIndex: 90,
+        }}
+      />
+      <aside
+        role="dialog"
+        aria-label="Menu"
+        style={{
+          position: 'absolute', top: 0, right: 0, bottom: 0,
+          width: '82%', maxWidth: 320, background: '#fff', zIndex: 91,
+          boxShadow: '-8px 0 30px rgba(0,0,0,0.18)',
+          transform: open ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 0.28s ease',
+          display: 'flex', flexDirection: 'column',
+        }}
+      >
+        <div style={{ padding: '52px 20px 18px', borderBottom: '1px solid #F0F0EC', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <p style={{ fontSize: 15, fontWeight: 700, color: '#1C1C1A', lineHeight: 1.2 }}>
+              {profile.name || 'Your account'}
+            </p>
+            {profile.businessName && (
+              <p style={{ fontSize: 12, color: '#6B6B67', marginTop: 3 }}>{profile.businessName}</p>
+            )}
+          </div>
+          <button onClick={onClose} aria-label="Close menu" style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#6B6B67', padding: 4 }}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <nav style={{ flex: 1, overflowY: 'auto', padding: '8px 8px 24px' }}>
+          {MENU_ITEMS.map(item => {
+            const isLogout = item.id === 'logout'
+            return (
+              <button
+                key={item.id}
+                onClick={() => onSelect(item.id)}
+                style={{
+                  width: '100%', display: 'flex', alignItems: 'center', gap: 14,
+                  padding: '14px 14px', borderRadius: 12, border: 'none',
+                  background: 'transparent', cursor: 'pointer', textAlign: 'left',
+                  color: isLogout ? '#b91c1c' : '#1C1C1A',
+                  fontSize: 15, fontWeight: 600,
+                }}
+              >
+                <MenuIconSvg id={item.id} />
+                <span>{item.label}</span>
+              </button>
+            )
+          })}
+        </nav>
+      </aside>
+    </>
+  )
+}
+
 // ─── Main export ──────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const { state, dispatch } = useApp()
   const { profile, dashboardTab, todaysDrop, orders, ordersFilter, showDashboardFTU } = state
+  const [menuOpen, setMenuOpen] = useState(false)
+
+  function handleMenuSelect(id) {
+    setMenuOpen(false)
+    if (id === 'customers') {
+      dispatch({ type: A.SET_DASHBOARD_TAB, payload: 'customers' })
+    } else if (id === 'orders') {
+      dispatch({ type: A.SET_ORDERS_FILTER, payload: null })
+      dispatch({ type: A.SET_DASHBOARD_TAB, payload: 'history' })
+    }
+    // profile, subscriptions, settings, logout: no destination yet
+  }
 
   return (
     <div className="app-shell" style={{ background: 'var(--sw-surface)' }}>
@@ -539,13 +731,17 @@ export default function Dashboard() {
           dispatch({ type: A.SET_ORDERS_FILTER, payload: null })
           dispatch({ type: A.SET_DASHBOARD_TAB, payload: 'home' })
         }}
+        onOpenMenu={() => setMenuOpen(true)}
       />
+
+      <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} profile={profile} onSelect={handleMenuSelect} />
 
       <div style={{ flex: 1, overflowY: 'auto' }}>
         {dashboardTab === 'home'      && <HomeTab />}
         {dashboardTab === 'orders'    && <OrdersTab />}
         {dashboardTab === 'analytics' && <AnalyticsTab />}
         {dashboardTab === 'customers' && <CustomersTab />}
+        {dashboardTab === 'history'   && <OrdersHistoryTab />}
       </div>
 
       {/* FAB hint nudge */}

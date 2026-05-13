@@ -16,7 +16,7 @@ const initialState = {
     businessName: '',
     businessType: null,        // BUSINESS_TYPES[i]
     isPerishable: null,        // true | false
-    deliveryType: null,        // 'self' | 'partner'
+    deliveryType: null,        // 'self' | 'partner' | 'both'
     deliveryPartner: null,     // DELIVERY_PARTNERS[i]
     payLaterEnabled: true,
     paymentMethods: [],
@@ -35,6 +35,13 @@ const initialState = {
     publishedAt: null,
     smartLink: '',
   },
+
+  // Subscriptions (recurring orders from storefront)
+  subscriptions: [],
+  // Each subscription: { id, itemId, itemName, itemPrice, itemImage, itemUnit,
+  //   itemDescription, qty, frequency, intervalDays, weekdays,
+  //   nextDeliveryAt, createdAt }
+  // frequency: 'daily' | 'every_n_days' | 'specific_days'
 
   // Orders
   orders: [],
@@ -72,6 +79,11 @@ export const A = {
   UPDATE_DROP_ITEM: 'UPDATE_DROP_ITEM',
   CLOSE_MARKETING_CARD: 'CLOSE_MARKETING_CARD',
   DISMISS_DASHBOARD_FTU: 'DISMISS_DASHBOARD_FTU',
+
+  // Subscriptions
+  ADD_SUBSCRIPTION: 'ADD_SUBSCRIPTION',
+  UPDATE_SUBSCRIPTION: 'UPDATE_SUBSCRIPTION',
+  REMOVE_SUBSCRIPTION: 'REMOVE_SUBSCRIPTION',
 
   // Orders
   PLACE_ORDER: 'PLACE_ORDER',
@@ -211,6 +223,25 @@ function reducer(state, { type, payload }) {
 
     case A.DISMISS_DASHBOARD_FTU:
       return { ...state, showDashboardFTU: false }
+
+    case A.ADD_SUBSCRIPTION: {
+      const sub = {
+        ...payload,
+        id: `SUB-${Date.now()}`,
+        createdAt: new Date().toISOString(),
+      }
+      return { ...state, subscriptions: [sub, ...state.subscriptions] }
+    }
+
+    case A.UPDATE_SUBSCRIPTION: {
+      const subs = state.subscriptions.map(s =>
+        s.id === payload.id ? { ...s, ...payload.changes } : s
+      )
+      return { ...state, subscriptions: subs }
+    }
+
+    case A.REMOVE_SUBSCRIPTION:
+      return { ...state, subscriptions: state.subscriptions.filter(s => s.id !== payload) }
 
     case A.PLACE_ORDER: {
       const order = { ...payload, id: `ORD-${Date.now()}`, placedAt: new Date().toISOString() }

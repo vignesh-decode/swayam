@@ -9,12 +9,6 @@ const PAYMENT_METHODS = [
     description: 'Accept payments via any UPI app',
   },
   {
-    id: 'bank',
-    name: 'Bank Transfer',
-    icon: '🏦',
-    description: 'Direct bank transfer / NEFT / IMPS',
-  },
-  {
     id: 'cod',
     name: 'Cash on Delivery',
     icon: '💵',

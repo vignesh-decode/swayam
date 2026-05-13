@@ -32,6 +32,7 @@ export default function DashboardFTU({ onDone }) {
   const [step, setStep] = useState(0)
   const [rect, setRect] = useState(null)
   const [shell, setShell] = useState(null)
+  const [visible, setVisible] = useState(false)
   const overlayRef = useRef(null)
 
   useEffect(() => {
@@ -42,22 +43,41 @@ export default function DashboardFTU({ onDone }) {
   useEffect(() => {
     if (!ready) return
     const shellEl = document.querySelector('.app-shell')
-    if (shellEl) setShell(shellEl.getBoundingClientRect())
-
     const el = document.querySelector(STEPS[step].target)
-    if (el) {
+    if (!shellEl || !el) return
+
+    const measure = () => {
+      setRect(el.getBoundingClientRect())
+      setShell(shellEl.getBoundingClientRect())
+    }
+
+    const isFixed = window.getComputedStyle(el).position === 'fixed'
+    const r = el.getBoundingClientRect()
+    const inView = r.top >= 0 && r.bottom <= window.innerHeight
+
+    let timerId
+    if (!isFixed && !inView) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      const update = () => {
-        setRect(el.getBoundingClientRect())
-        if (shellEl) setShell(shellEl.getBoundingClientRect())
-      }
-      setTimeout(update, 350)
-      window.addEventListener('resize', update)
-      return () => window.removeEventListener('resize', update)
+      timerId = setTimeout(() => {
+        measure()
+        requestAnimationFrame(() => setVisible(true))
+      }, 420)
+    } else {
+      measure()
+      requestAnimationFrame(() => setVisible(true))
+    }
+
+    const onResize = () => measure()
+    window.addEventListener('resize', onResize)
+    window.addEventListener('scroll', onResize, true)
+    return () => {
+      if (timerId) clearTimeout(timerId)
+      window.removeEventListener('resize', onResize)
+      window.removeEventListener('scroll', onResize, true)
     }
   }, [step, ready])
 
-  if (!ready || !shell) return null
+  if (!ready || !shell || !rect) return null
 
   const current = STEPS[step]
   const isLast = step === STEPS.length - 1
@@ -81,21 +101,18 @@ export default function DashboardFTU({ onDone }) {
   } : null
 
   const tooltipAbove = current.position === 'top'
-  const tooltipStyle = rect ? {
+  const tooltipStyle = {
     position: 'fixed',
     left: shell.left + 16,
     right: window.innerWidth - shell.right + 16,
     zIndex: 10002,
+    opacity: visible ? 1 : 0,
+    transform: visible ? 'translateY(0)' : 'translateY(6px)',
+    transition: 'opacity 0.35s ease, transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), top 0.4s cubic-bezier(0.4, 0, 0.2, 1), bottom 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
     ...(tooltipAbove
       ? { bottom: window.innerHeight - rect.top + pad + 12 }
       : { top: rect.bottom + pad + 12 }
     ),
-  } : {
-    position: 'fixed',
-    left: shell.left + 16,
-    right: window.innerWidth - shell.right + 16,
-    top: '40%',
-    zIndex: 10002,
   }
 
   return (
@@ -108,6 +125,9 @@ export default function DashboardFTU({ onDone }) {
         width: shell.width,
         height: shell.height,
         zIndex: 10000,
+        opacity: visible ? 1 : 0,
+        transition: 'opacity 0.35s ease',
+        pointerEvents: visible ? 'auto' : 'none',
       }}>
         <svg style={{ width: '100%', height: '100%', display: 'block' }}>
           <defs>
@@ -137,7 +157,8 @@ export default function DashboardFTU({ onDone }) {
           zIndex: 10001,
           border: '2px solid rgba(255,255,255,0.5)',
           pointerEvents: 'none',
-          transition: 'all 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
+          opacity: visible ? 1 : 0,
+          transition: 'opacity 0.35s ease, top 0.4s cubic-bezier(0.4, 0, 0.2, 1), left 0.4s cubic-bezier(0.4, 0, 0.2, 1), width 0.4s cubic-bezier(0.4, 0, 0.2, 1), height 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
         }} />
       )}
 
