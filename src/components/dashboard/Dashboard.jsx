@@ -5,6 +5,7 @@ import WeeklyChart from './WeeklyChart'
 import { CustomerList, PaymentStatus } from './WeeklyChart'
 import FeedbackWidget from '../feedback/FeedbackWidget'
 import DashboardFTU from './DashboardFTU'
+import Subscriptions, { SubscriptionStats } from './Subscriptions'
 
 const FILTER_LABELS = {
   new: 'To Prepare',
@@ -27,9 +28,42 @@ function SwayamLogo() {
 }
 
 // ─── Header ───────────────────────────────────────────────────────────────────
-const TAB_TITLES = { orders: 'Orders', analytics: 'Analytics', customers: 'Customers', history: 'Orders history' }
+const TAB_TITLES = { orders: 'Orders', analytics: 'Analytics', customers: 'Customers', history: 'Orders history', subscriptions: 'Subscriptions' }
 
-function DashboardHeader({ profile, orders, todaysDrop, dashboardTab, ordersFilter, onBack, onOpenMenu }) {
+function DashboardHeader({ profile, orders, subscriptions, todaysDrop, dashboardTab, ordersFilter, onBack, onOpenMenu }) {
+  // Subscriptions tab — same compact-with-back layout, but with three KPI cards
+  // underneath (mirrors the home header's stat strip).
+  if (dashboardTab === 'subscriptions') {
+    return (
+      <div className="sw-header" style={{ paddingTop: 52, paddingBottom: 20, paddingLeft: 20, paddingRight: 20, position: 'sticky', top: 0, zIndex: 40 }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+          <SwayamLogo />
+          <button onClick={onOpenMenu} aria-label="Menu" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.85)', padding: 4 }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6"/>
+              <line x1="3" y1="12" x2="21" y2="12"/>
+              <line x1="3" y1="18" x2="21" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+          <button
+            onClick={onBack}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(255,255,255,0.9)', padding: 4, marginLeft: -4, display: 'flex' }}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+          <h1 style={{ color: '#fff', fontSize: 22, fontWeight: 700, lineHeight: 1.1, letterSpacing: '-0.01em' }}>
+            Subscriptions
+          </h1>
+        </div>
+        <SubscriptionStats subscriptions={subscriptions} />
+      </div>
+    )
+  }
+
   // Compact header with back arrow when not on the home tab
   if (dashboardTab !== 'home') {
     return (
@@ -701,7 +735,7 @@ function SideMenu({ open, onClose, profile, onSelect }) {
 // ─── Main export ──────────────────────────────────────────────────────────────
 export default function Dashboard() {
   const { state, dispatch } = useApp()
-  const { profile, dashboardTab, todaysDrop, orders, ordersFilter, showDashboardFTU } = state
+  const { profile, dashboardTab, todaysDrop, orders, subscriptions, ordersFilter, showDashboardFTU } = state
   const [menuOpen, setMenuOpen] = useState(false)
 
   function handleMenuSelect(id) {
@@ -711,8 +745,10 @@ export default function Dashboard() {
     } else if (id === 'orders') {
       dispatch({ type: A.SET_ORDERS_FILTER, payload: null })
       dispatch({ type: A.SET_DASHBOARD_TAB, payload: 'history' })
+    } else if (id === 'subscriptions') {
+      dispatch({ type: A.SET_DASHBOARD_TAB, payload: 'subscriptions' })
     }
-    // profile, subscriptions, settings, logout: no destination yet
+    // profile, settings, logout: no destination yet
   }
 
   return (
@@ -724,6 +760,7 @@ export default function Dashboard() {
       <DashboardHeader
         profile={profile}
         orders={orders}
+        subscriptions={subscriptions}
         todaysDrop={todaysDrop}
         dashboardTab={dashboardTab}
         ordersFilter={ordersFilter}
@@ -737,11 +774,12 @@ export default function Dashboard() {
       <SideMenu open={menuOpen} onClose={() => setMenuOpen(false)} profile={profile} onSelect={handleMenuSelect} />
 
       <div style={{ flex: 1, overflowY: 'auto' }}>
-        {dashboardTab === 'home'      && <HomeTab />}
-        {dashboardTab === 'orders'    && <OrdersTab />}
-        {dashboardTab === 'analytics' && <AnalyticsTab />}
-        {dashboardTab === 'customers' && <CustomersTab />}
-        {dashboardTab === 'history'   && <OrdersHistoryTab />}
+        {dashboardTab === 'home'          && <HomeTab />}
+        {dashboardTab === 'orders'        && <OrdersTab />}
+        {dashboardTab === 'analytics'     && <AnalyticsTab />}
+        {dashboardTab === 'customers'     && <CustomersTab />}
+        {dashboardTab === 'history'       && <OrdersHistoryTab />}
+        {dashboardTab === 'subscriptions' && <Subscriptions />}
       </div>
 
       {/* FAB hint nudge */}

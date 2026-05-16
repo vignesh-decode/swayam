@@ -442,9 +442,9 @@ body {
   --sw-cream:   #FAF6EE;
   --sw-surface: #EDEBE7;
   --sw-card:    #FFFFFF;
-  --sw-blob-teal: rgba(139,168,158,0.55);
-  --sw-blob-sand: rgba(200,185,154,0.60);
-  --sw-blob-pink: rgba(212,144,138,0.55);
+  --sw-blob-teal: rgba(139,168,158,0.28);
+  --sw-blob-sand: rgba(200,185,154,0.30);
+  --sw-blob-pink: rgba(212,144,138,0.28);
   --sw-label:   #3A3A36;
 }
 
@@ -499,9 +499,7 @@ body {
 .sw-bucket:active { transform: scale(0.98); }
 
 .sw-blob {
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
+  display: none;
 }
 
 .sw-fab {

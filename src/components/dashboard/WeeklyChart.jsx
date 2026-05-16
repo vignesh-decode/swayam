@@ -101,7 +101,7 @@ export function PaymentStatus({ orders }) {
 // ─── Customer list ────────────────────────────────────────────────────────────
 export function CustomerList() {
   const { state } = useApp()
-  const { orders } = state
+  const { orders, subscriptions } = state
 
   // Aggregate by customer name+phone
   const customerMap = {}
@@ -121,6 +121,30 @@ export function CustomerList() {
     if (o.placedAt > customerMap[key].lastOrder) customerMap[key].lastOrder = o.placedAt
   })
 
+  // Subscribed-customer index — match by phone first, then name.
+  const subscribedPhones = new Set()
+  const subscribedNames = new Set()
+  ;(subscriptions || []).forEach(s => {
+    if (s.status === 'cancelled') return
+    if (s.customerPhone) subscribedPhones.add(s.customerPhone)
+    if (s.customerName)  subscribedNames.add(s.customerName)
+  })
+
+  // Promote subscribed customers who haven't ordered yet so they still appear.
+  ;(subscriptions || []).forEach(s => {
+    if (s.status === 'cancelled') return
+    const key = s.customerPhone || s.customerName
+    if (!customerMap[key]) {
+      customerMap[key] = {
+        name: s.customerName,
+        phone: s.customerPhone,
+        orders: 0,
+        total: 0,
+        lastOrder: s.startedAt || s.createdAt,
+      }
+    }
+  })
+
   const customers = Object.values(customerMap).sort((a, b) => b.total - a.total)
 
   if (customers.length === 0) {
@@ -129,19 +153,57 @@ export function CustomerList() {
 
   return (
     <div className="card overflow-hidden">
-      {customers.map((c, i) => (
-        <div key={c.phone || c.name} className={`flex items-center gap-3 p-4 ${i < customers.length - 1 ? 'border-b border-gray-50' : ''}`}>
-          <Avatar name={c.name} size={40} />
-          <div className="flex-1 min-w-0">
-            <p className="font-600 text-sm text-gray-900 truncate">{c.name}</p>
-            <p className="text-xs text-gray-400">{c.phone}</p>
+      {customers.map((c, i) => {
+        const isSubscribed = (c.phone && subscribedPhones.has(c.phone)) || subscribedNames.has(c.name)
+        return (
+          <div key={c.phone || c.name} className={`flex items-center gap-3 p-4 ${i < customers.length - 1 ? 'border-b border-gray-50' : ''}`}>
+            <Avatar name={c.name} size={40} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <p className="font-600 text-sm text-gray-900 truncate">{c.name}</p>
+                {isSubscribed && <SubscribedBadge />}
+              </div>
+              <p className="text-xs text-gray-400">{c.phone}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm font-700 text-brand-700">₹{c.total.toLocaleString('en-IN')}</p>
+              <p className="text-xs text-gray-400">
+                {c.orders > 0 ? `${c.orders} order${c.orders > 1 ? 's' : ''}` : 'Subscriber'}
+              </p>
+            </div>
           </div>
-          <div className="text-right">
-            <p className="text-sm font-700 text-brand-700">₹{c.total.toLocaleString('en-IN')}</p>
-            <p className="text-xs text-gray-400">{c.orders} order{c.orders > 1 ? 's' : ''}</p>
-          </div>
-        </div>
-      ))}
+        )
+      })}
     </div>
+  )
+}
+
+// ─── Subscribed badge (chip with repeat-circle icon) ─────────────────────────
+function SubscribedBadge() {
+  return (
+    <span
+      title="Subscribed customer"
+      aria-label="Subscribed"
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: 3,
+        background: '#E6EFE3',
+        color: '#243928',
+        fontSize: 10,
+        fontWeight: 700,
+        letterSpacing: '0.04em',
+        padding: '2px 7px 2px 5px',
+        borderRadius: 999,
+        flexShrink: 0,
+      }}
+    >
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="23 4 23 10 17 10"/>
+        <polyline points="1 20 1 14 7 14"/>
+        <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+      </svg>
+      SUB
+    </span>
   )
 }

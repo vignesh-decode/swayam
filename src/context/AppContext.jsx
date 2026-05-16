@@ -1,10 +1,11 @@
 import { createContext, useContext, useReducer, useCallback } from 'react'
+import { MOCK_SUBSCRIPTIONS } from '../data/mockSubscriptions'
 
 // ─── Initial state ───────────────────────────────────────────────────────────
 const initialState = {
   // Navigation
   view: 'intro',                // 'intro' | 'onboarding' | 'dashboard' | 'storefront'
-  dashboardTab: 'home',        // 'home' | 'orders' | 'customers' | 'analytics'
+  dashboardTab: 'home',        // 'home' | 'orders' | 'customers' | 'analytics' | 'history' | 'subscriptions'
 
   // Onboarding
   onboardingStep: 1,           // 1–5
@@ -36,12 +37,14 @@ const initialState = {
     smartLink: '',
   },
 
-  // Subscriptions (recurring orders from storefront)
-  subscriptions: [],
-  // Each subscription: { id, itemId, itemName, itemPrice, itemImage, itemUnit,
-  //   itemDescription, qty, frequency, intervalDays, weekdays,
-  //   nextDeliveryAt, createdAt }
-  // frequency: 'daily' | 'every_n_days' | 'specific_days'
+  // Subscriptions (recurring orders)
+  subscriptions: MOCK_SUBSCRIPTIONS,
+  // Each subscription: { id, customerName, customerPhone, customerAddress,
+  //   itemId, itemName, itemPrice, itemImage, itemUnit, itemDescription,
+  //   qty, frequency, intervalDays, weekdays, monthlyDay,
+  //   status, nextDeliveryAt, createdAt, startedAt, pausedAt, cancelledAt }
+  // frequency: 'daily' | 'weekdays' | 'every_n_days' | 'specific_days' | 'monthly'
+  // status: 'active' | 'paused' | 'cancelled'
 
   // Orders
   orders: [],
